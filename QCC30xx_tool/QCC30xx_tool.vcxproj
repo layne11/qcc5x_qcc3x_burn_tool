@@ -114,7 +114,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>.\lib\TestEngine.lib;.\lib\TestFlash.lib</AdditionalDependencies>
+      <AdditionalDependencies>.\lib\TestEngine_x64.lib;.\lib\TestFlash_x64.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -167,7 +167,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>.\lib\TestEngine.lib;.\lib\TestFlash.lib</AdditionalDependencies>
+      <AdditionalDependencies>.\lib\TestEngine_x64.lib;.\lib\TestFlash_x64.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>

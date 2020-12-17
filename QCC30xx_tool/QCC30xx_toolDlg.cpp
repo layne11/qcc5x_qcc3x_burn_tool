@@ -25,13 +25,13 @@ typedef struct user_config{
 	UINT32 trans_port;
 	bool check_earse;
 	bool check_burn;
-	bool check_set_addr_and_name;
-	bool check_get_addr_and_name;
+	bool check_set_bt_config;
+	bool check_get_bt_config;
 	bool check_addr_auto_add;
+	bool check_trim;
 	UINT8 addr_auto_add_count;
-	/*bool check_trim;
 	INT8 trim_cap;
-	INT8 trim_freq;*/
+	INT8 trim_freq;
 	char btaddr[15];
 	char btname[MAX_PATH];
 	char file_path[MAX_PATH];
@@ -98,7 +98,6 @@ int str2hexArray(char *src, uint8 * dst)
 int addr2str(char *src, char * dst,uint8 type)
 {
 	int i,j,n,k;
-	char *p;
 	memset(dst,'0',14);
 	dst[4] = '-';
 	dst[7] = '-';
@@ -177,6 +176,17 @@ int get_trans_port(char (*port)[32], int *num)
 	return 1;
 
 }
+#ifdef UNICODE
+void get_key_value(LPCTSTR key, LPWSTR key_value)
+{
+	GetPrivateProfileString(_T("USER_CONFIG"), key, _T("error"), key_value, MAX_PATH, _T(".\\UserConfig.ini"));
+}
+
+void set_key_value(LPCWSTR key, LPCWSTR key_value)
+{
+	WritePrivateProfileString(_T("USER_CONFIG"), key, key_value, _T(".\\UserConfig.ini"));
+}
+#else
 void get_key_value(char *key, char *key_value)
 {
 	GetPrivateProfileString("USER_CONFIG", key, "error", key_value, MAX_PATH, ".\\UserConfig.ini");
@@ -186,7 +196,120 @@ void set_key_value(char *key, char *key_value)
 {
 	WritePrivateProfileString("USER_CONFIG", key, key_value, ".\\UserConfig.ini");
 }
+#endif
 
+#ifdef UNICODE
+void initLoadConfig(void)
+{
+	WCHAR temp_key_value[MAX_PATH];
+	char temp_string[MAX_PATH];
+	get_key_value(_T("chipType"), (LPWSTR)temp_key_value);
+	g_user_config.chip_type = atoi((const char *)temp_key_value);
+	if (g_user_config.chip_type > 1)
+		g_user_config.chip_type = 0;
+
+	get_key_value(_T("transType"), (LPWSTR)temp_key_value);
+	g_user_config.trans_type = atoi((const char *)temp_key_value);
+	if(g_user_config.trans_type > 1)
+		g_user_config.trans_type = 0;
+
+	get_key_value(_T("transPort"), (LPWSTR)temp_key_value);
+	g_user_config.trans_port = atoi((const char *)temp_key_value);
+	if (g_user_config.trans_port > 999999)
+		g_user_config.trans_port = 0;
+
+	get_key_value(_T("checkEarse"), (LPWSTR)temp_key_value);
+	g_user_config.check_earse = atoi((const char *)temp_key_value);
+
+	get_key_value(_T("checkBurn"), (LPWSTR)temp_key_value);
+	g_user_config.check_burn = atoi((const char *)temp_key_value);
+
+	get_key_value(_T("checkSetAddrAndName"), (LPWSTR)temp_key_value);
+	g_user_config.check_set_bt_config = atoi((const char *)temp_key_value);
+
+	get_key_value(_T("checkGetAddrAndName"), (LPWSTR)temp_key_value);
+	g_user_config.check_get_bt_config = atoi((const char *)temp_key_value);
+
+	get_key_value(_T("checkAddrAdd"), (LPWSTR)temp_key_value);
+	g_user_config.check_addr_auto_add = atoi((const char *)temp_key_value);
+
+	get_key_value(_T("AddrAddCount"), (LPWSTR)temp_key_value);
+	g_user_config.addr_auto_add_count = atoi((const char *)temp_key_value);
+	if(g_user_config.addr_auto_add_count < 0 || g_user_config.addr_auto_add_count > 2)
+		g_user_config.addr_auto_add_count = 0;
+
+	get_key_value("btLoadCap",temp_key_value);
+	g_user_config.trim_cap = atoi((const char *)temp_key_value);
+
+	get_key_value("btFreqTrim",temp_key_value);
+	g_user_config.trim_freq = atoi((const char *)temp_key_value);
+
+	get_key_value(_T("btaddr"), (LPWSTR)temp_key_value);
+	if(-1 != str2hexArray(temp_key_value,(uint8 *)g_user_config.btaddr))
+		memcpy(g_user_config.btaddr, temp_key_value, 15);
+	else
+		strcpy(g_user_config.btaddr, "0002-5b-00ff00");
+
+	get_key_value(_T("btname"), (LPWSTR)temp_key_value);
+	memcpy(g_user_config.btname, temp_key_value, MAX_PATH);
+
+	get_key_value(_T("filePath"), (LPWSTR)temp_key_value);
+	memcpy(g_user_config.file_path, temp_key_value, MAX_PATH);
+}
+
+void initSaveConfig(void)
+{
+	WCHAR temp_key_value[MAX_PATH];
+	char temp_string[MAX_PATH];
+	
+	itoa(g_user_config.chip_type, temp_key_value, 10);
+	set_key_value(_T("chipType"), temp_key_value);
+
+	itoa(g_user_config.trans_type, temp_key_value, 10);
+	set_key_value(_T("transType"), temp_key_value);
+
+	itoa(g_user_config.trans_port, temp_key_value, 10);
+	set_key_value(_T("transPort"), temp_key_value);
+
+	itoa(g_user_config.check_earse, temp_key_value, 10);
+	set_key_value(_T("checkEarse"), temp_key_value);
+
+	itoa(g_user_config.check_burn, temp_key_value, 10);
+	set_key_value(_T("checkBurn"), temp_key_value);
+
+	itoa(g_user_config.check_set_bt_config, temp_key_value, 10);
+	set_key_value(_T("checkSetAddrAndName"), temp_key_value);
+
+	itoa(g_user_config.check_get_bt_config, temp_key_value, 10);
+	set_key_value(_T("checkGetAddrAndName"), temp_key_value);
+
+	itoa(g_user_config.check_addr_auto_add, temp_key_value, 10);
+	set_key_value(_T("checkAddrAdd"), temp_key_value);
+
+	if(g_user_config.addr_auto_add_count < 0 || g_user_config.addr_auto_add_count > 2)
+	g_user_config.addr_auto_add_count = 0;
+	itoa(g_user_config.addr_auto_add_count, temp_key_value, 10);
+	set_key_value(_T("AddrAddCount"), temp_key_value);
+
+	itoa(g_user_config.trim_cap,temp_key_value, 10);
+	set_key_value("btLoadCap",temp_key_value);
+
+	itoa(g_user_config.trim_freq,temp_key_value, 10);
+	set_key_value("btFreqTrim",temp_key_value);
+
+	if(-1 != str2hexArray(g_user_config.btaddr,(uint8 *)temp_key_value))
+		memcpy(temp_key_value, g_user_config.btaddr, 15);
+	else
+		strcpy(temp_key_value, "0002-5b-00ff00");
+	set_key_value(_T("btaddr"), temp_key_value);
+
+	memcpy(temp_key_value, g_user_config.btname, MAX_PATH);
+	set_key_value(_T("btname"), temp_key_value);
+
+	memcpy(temp_key_value, g_user_config.file_path, MAX_PATH);
+	set_key_value(_T("filePath"), temp_key_value);
+}
+#else
 void initLoadConfig(void)
 {
 	char temp_key_value[MAX_PATH];
@@ -212,10 +335,10 @@ void initLoadConfig(void)
 	g_user_config.check_burn = atoi((const char *)temp_key_value);
 
 	get_key_value("checkSetAddrAndName",temp_key_value);
-	g_user_config.check_set_addr_and_name = atoi((const char *)temp_key_value);
+	g_user_config.check_set_bt_config = atoi((const char *)temp_key_value);
 
 	get_key_value("checkGetAddrAndName",temp_key_value);
-	g_user_config.check_get_addr_and_name = atoi((const char *)temp_key_value);
+	g_user_config.check_get_bt_config = atoi((const char *)temp_key_value);
 
 	get_key_value("checkAddrAdd",temp_key_value);
 	g_user_config.check_addr_auto_add = atoi((const char *)temp_key_value);
@@ -224,17 +347,12 @@ void initLoadConfig(void)
 	g_user_config.addr_auto_add_count = atoi((const char *)temp_key_value);
 	if(g_user_config.addr_auto_add_count < 0 || g_user_config.addr_auto_add_count > 2)
 		g_user_config.addr_auto_add_count = 0;
-	/*get_key_value("checkSetname",temp_key_value);
-	g_user_config.check_set_name = atoi((const char *)temp_key_value);
 
-	get_key_value("checkTrim",temp_key_value);
-	g_user_config.check_trim = atoi((const char *)temp_key_value);
-
-	get_key_value("trimCap",temp_key_value);
+	get_key_value("btLoadCap",temp_key_value);
 	g_user_config.trim_cap = atoi((const char *)temp_key_value);
 
-	get_key_value("trimFreq",temp_key_value);
-	g_user_config.trim_freq = atoi((const char *)temp_key_value);*/
+	get_key_value("btFreqTrim",temp_key_value);
+	g_user_config.trim_freq = atoi((const char *)temp_key_value);
 
 	get_key_value("btaddr", temp_key_value);
 	if(-1 != str2hexArray(temp_key_value,(uint8 *)g_user_config.btaddr))
@@ -268,10 +386,10 @@ void initSaveConfig(void)
 	itoa(g_user_config.check_burn, temp_key_value, 10);
 	set_key_value("checkBurn", temp_key_value);
 
-	itoa(g_user_config.check_set_addr_and_name, temp_key_value, 10);
+	itoa(g_user_config.check_set_bt_config, temp_key_value, 10);
 	set_key_value("checkSetAddrAndName", temp_key_value);
 
-	itoa(g_user_config.check_get_addr_and_name, temp_key_value, 10);
+	itoa(g_user_config.check_get_bt_config, temp_key_value, 10);
 	set_key_value("checkGetAddrAndName", temp_key_value);
 
 	itoa(g_user_config.check_addr_auto_add, temp_key_value, 10);
@@ -281,17 +399,12 @@ void initSaveConfig(void)
 	g_user_config.addr_auto_add_count = 0;
 	itoa(g_user_config.addr_auto_add_count, temp_key_value, 10);
 	set_key_value("AddrAddCount", temp_key_value);
-	/*itoa(g_user_config.check_set_name,temp_key_value, 10);
-	set_key_value("checkSetname",temp_key_value);
-
-	itoa(g_user_config.check_trim,temp_key_value, 10);
-	set_key_value("checkTrim",temp_key_value);
 
 	itoa(g_user_config.trim_cap,temp_key_value, 10);
-	set_key_value("trimCap",temp_key_value);
+	set_key_value("btLoadCap",temp_key_value);
 
 	itoa(g_user_config.trim_freq,temp_key_value, 10);
-	set_key_value("trimFreq",temp_key_value);*/
+	set_key_value("btFreqTrim",temp_key_value);
 
 	if(-1 != str2hexArray(g_user_config.btaddr,(uint8 *)temp_key_value))
 		memcpy(temp_key_value, g_user_config.btaddr, 15);
@@ -305,7 +418,7 @@ void initSaveConfig(void)
 	memcpy(temp_key_value, g_user_config.file_path, MAX_PATH);
 	set_key_value("filePath", temp_key_value);
 }
-
+#endif
 CQCC30xx_toolDlg::CQCC30xx_toolDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CQCC30xx_toolDlg::IDD, pParent)
 {
@@ -328,13 +441,12 @@ BEGIN_MESSAGE_MAP(CQCC30xx_toolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_SET_ADDR_AND_NAME, &CQCC30xx_toolDlg::OnBnClickedCheckSetAddrAndName)
 	ON_BN_CLICKED(IDC_CHECK_ADDR_AUTO_ADD, &CQCC30xx_toolDlg::OnBnClickedCheckAddrAutoAdd)
 	ON_BN_CLICKED(IDC_CHECK_GET_ADDR_AND_NAME, &CQCC30xx_toolDlg::OnBnClickedCheckGetAddrAndName)
-	ON_BN_CLICKED(IDC_CHECK_TRIM, &CQCC30xx_toolDlg::OnBnClickedCheckTrim)
 	ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 
 // CQCC30xx_toolDlg 消息处理程序
-void program_dev_multiple(void)
+int CQCC30xx_toolDlg::dev_program_multiple(void)
 {
 	int retVal = -1;
 
@@ -415,9 +527,11 @@ void program_dev_multiple(void)
 
 		flmClose(devMask);
 	}
+
+	return retVal;
 }
 
-int CQCC30xx_toolDlg::program_dev_single()
+int CQCC30xx_toolDlg::dev_program_single()
 {
 	int retVal = -1;
 	uint8 m_trans_type;
@@ -505,7 +619,6 @@ int CQCC30xx_toolDlg::program_dev_single()
 			printf("Successfully programmed device\n");
 			retVal = 0;
 		}
-
 		flClose();
 	}
 
@@ -513,11 +626,11 @@ int CQCC30xx_toolDlg::program_dev_single()
 
 }
 
-int CQCC30xx_toolDlg::config_operation()
+int CQCC30xx_toolDlg::dev_config_operate()
 {
 	int32 ret = -1;
 	int i = 0;
-	uint32 devHandle;
+	uint32 devHandle = 0;
 	uint16 trans_port_type;
 	char trans_port_num[32];
 	if(0 == g_user_config.trans_type){
@@ -544,27 +657,32 @@ int CQCC30xx_toolDlg::config_operation()
 		if (success == TE_OK) {
 			success = teConfigCacheRead(devHandle, NULL, unused);
 		}
-#if 0
-		// Read current XTAL trim value
-		if (success == TE_OK) {
-			char valueString[KEY_READ_BUFFER_LEN];
-			uint32 maxLen = KEY_READ_BUFFER_LEN;
 
-			success = teConfigCacheReadItem(devHandle, "curator:XtalFreqTrim", valueString, &maxLen);
+		if(g_user_config.check_set_bt_config)
+			GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(_T("SET CONFIG..."));
+
+		// Write XTAL trim value
+		if (success == TE_OK && g_user_config.check_set_bt_config) {
 			if (success == TE_OK) {
-				printf("curator:XtalFreqTrim = %s", valueString);
+				char valueString[KEY_READ_BUFFER_LEN];
+				char valueString1[KEY_READ_BUFFER_LEN];
+				sprintf(valueString,"0x%02x",g_user_config.trim_cap);
+				sprintf(valueString1,"%d",g_user_config.trim_freq);
+
+				if(g_user_config.chip_type) {
+					success = teConfigCacheWriteItem(devHandle, "system3:XtalLoadCapacitance", valueString);//curator3/system3
+					if(success == TE_OK)
+						success = teConfigCacheWriteItem(devHandle, "system3:XtalFreqTrim", valueString1);//curator3/system3
+				} else {
+					success = teConfigCacheWriteItem(devHandle, "system3:XtalLoadCapacitance", valueString);//curator3/system3
+					if(success == TE_OK)
+						success = teConfigCacheWriteItem(devHandle, "system3:XtalFreqTrim", valueString1);//curator3/system3
+				}
 			}
 		}
 
-		// Write updated XTAL trim value
-		if (success == TE_OK) {
-			success = teConfigCacheWriteItem(devHandle, "curator15:XtalFreqTrim", "3");
-		}
-#endif
-
 		// Write Bluetooth address
-		GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(_T("SET CONFIG..."));
-		if (success == TE_OK && g_user_config.check_set_addr_and_name) {
+		if (success == TE_OK && g_user_config.check_set_bt_config) {
 			char valueString[KEY_READ_BUFFER_LEN];
 			uint8 m_addr[6];
 			if(-1 != str2hexArray(g_user_config.btaddr, m_addr)) {
@@ -581,20 +699,52 @@ int CQCC30xx_toolDlg::config_operation()
 		}
 
 		// Write Bluetooth name
-		if (success == TE_OK && g_user_config.check_set_addr_and_name) {
+		if (success == TE_OK && g_user_config.check_set_bt_config) {
 			char valueString[KEY_READ_BUFFER_LEN];
 			sprintf(valueString, "\"%s\"", g_user_config.btname);
-			if(g_user_config.chip_type) {
-				//qcc512x
+			if(g_user_config.chip_type) {//qcc512x
 				success = teConfigCacheWriteItem(devHandle, "bt2:PSKEY_DEVICE_NAME", valueString);
 			} else {
 				success = teConfigCacheWriteItem(devHandle, "app5:DeviceName", valueString);
 			}
 		}
+		if(g_user_config.check_get_bt_config)
+			GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(_T("GET CONFIG..."));
 
-		////Read Bluetooth addr
-		GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(_T("GET CONFIG..."));
-		if (success == TE_OK && g_user_config.check_get_addr_and_name) {
+		// Read XTAL trim value
+		if (success == TE_OK && g_user_config.check_get_bt_config) {
+			char valueString[KEY_READ_BUFFER_LEN];
+			char valueString1[KEY_READ_BUFFER_LEN];
+			uint32 maxLen = KEY_READ_BUFFER_LEN;
+
+			if(g_user_config.chip_type) {//qcc512x
+				success = teConfigCacheReadItem(devHandle, "system3:XtalLoadCapacitance", valueString, &maxLen);//curator3/system3
+				if(success == TE_OK)
+					success = teConfigCacheReadItem(devHandle, "system3:XtalFreqTrim", valueString1, &maxLen);//curator3/system3
+			} else {
+				success = teConfigCacheReadItem(devHandle, "system3:XtalLoadCapacitance", valueString, &maxLen);//curator3/system3
+				if(success == TE_OK)
+					success = teConfigCacheReadItem(devHandle, "system3:XtalFreqTrim", valueString1, &maxLen);//curator3/system3
+			}
+			if (success == TE_OK) {
+				CString str,str1;
+				int cap;
+				printf("Cap and trim = %s,%s", valueString, valueString1);
+				sscanf(valueString,"0x%02x",&cap) ;
+#ifdef UNICODE
+				str.Format(_T("%d"), cap);
+				str1.Format(_T("%s"), valueString1);
+#else
+				str.Format("%d", cap);
+				str1.Format("%s", valueString1);
+#endif
+				GetDlgItem(IDC_EDIT_LOAD_CAP)->SetWindowText(str);
+				GetDlgItem(IDC_EDIT_FREQ_TRIM)->SetWindowText(str1);
+			}
+		}
+
+		//Read Bluetooth addr
+		if (success == TE_OK && g_user_config.check_get_bt_config) {
 			char valueString[KEY_READ_BUFFER_LEN];
 			uint32 maxLen = KEY_READ_BUFFER_LEN;
 			if(g_user_config.chip_type)
@@ -607,13 +757,17 @@ int CQCC30xx_toolDlg::config_operation()
 				printf("dev addr = %s", valueString);
 
 				addr2str(valueString, tmp_addr, g_user_config.chip_type);
+#ifdef UNICODE
+				str.Format(_T("%s"), tmp_addr);
+#else
 				str.Format("%s", tmp_addr);
+#endif
 				GetDlgItem(IDC_EDIT_ADDR)->SetWindowText(str);
 			}
 		}
 
 		//Read Bluetooth name
-		if (success == TE_OK && g_user_config.check_get_addr_and_name) {
+		if (success == TE_OK && g_user_config.check_get_bt_config) {
 			char valueString[KEY_READ_BUFFER_LEN];
 			uint32 maxLen = KEY_READ_BUFFER_LEN;
 			if(g_user_config.chip_type)
@@ -630,7 +784,11 @@ int CQCC30xx_toolDlg::config_operation()
 				}
 				valueString[j-2] = '\0';
 				printf("devname = %s", valueString);
+#ifdef UNICODE
+				str.Format(_T("%s"), valueString);
+#else
 				str.Format("%s", valueString);
+#endif
 				GetDlgItem(IDC_EDIT_DEV_NAME)->SetWindowText(str);
 			}
 		}
@@ -671,7 +829,6 @@ BOOL CQCC30xx_toolDlg::OnInitDialog()
 	initLoadConfig();
 	setConfigToDialog();
 
-	GetDlgItem(IDC_CHECK_TRIM)->EnableWindow(FALSE);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -719,9 +876,9 @@ void CQCC30xx_toolDlg::loadConfigFromDialog()
 
 	g_user_config.check_burn =((CButton *)GetDlgItem(IDC_CHECK_BURN))->GetCheck();
 
-	g_user_config.check_set_addr_and_name =((CButton *)GetDlgItem(IDC_CHECK_SET_ADDR_AND_NAME))->GetCheck();
+	g_user_config.check_set_bt_config =((CButton *)GetDlgItem(IDC_CHECK_SET_ADDR_AND_NAME))->GetCheck();
 
-	g_user_config.check_get_addr_and_name =((CButton *)GetDlgItem(IDC_CHECK_GET_ADDR_AND_NAME))->GetCheck();
+	g_user_config.check_get_bt_config =((CButton *)GetDlgItem(IDC_CHECK_GET_ADDR_AND_NAME))->GetCheck();
 
 	g_user_config.check_addr_auto_add =((CButton *)GetDlgItem(IDC_CHECK_ADDR_AUTO_ADD))->GetCheck();
 
@@ -750,6 +907,12 @@ void CQCC30xx_toolDlg::loadConfigFromDialog()
 	GetDlgItem(IDC_EDIT_DEV_NAME)->GetWindowText(str);
 	memcpy(g_user_config.btname, str.GetBuffer(str.GetLength()),str.GetLength());
 	g_user_config.btname[str.GetLength()] = '\0';
+
+	GetDlgItem(IDC_EDIT_LOAD_CAP)->GetWindowText(str);
+	g_user_config.trim_cap = _ttoi(str);
+
+	GetDlgItem(IDC_EDIT_FREQ_TRIM)->GetWindowText(str);
+	g_user_config.trim_freq = _ttoi(str);
 }
 
 void CQCC30xx_toolDlg::setConfigToDialog()
@@ -760,14 +923,16 @@ void CQCC30xx_toolDlg::setConfigToDialog()
 
 	((CButton *)GetDlgItem(IDC_CHECK_BURN))->SetCheck(g_user_config.check_burn);
 
-	((CButton *)GetDlgItem(IDC_CHECK_SET_ADDR_AND_NAME))->SetCheck(g_user_config.check_set_addr_and_name);
-	if(!g_user_config.check_set_addr_and_name){
+	((CButton *)GetDlgItem(IDC_CHECK_SET_ADDR_AND_NAME))->SetCheck(g_user_config.check_set_bt_config);
+	if(!g_user_config.check_set_bt_config){
 		GetDlgItem(IDC_EDIT_ADDR)->EnableWindow(FALSE);
 		GetDlgItem(IDC_EDIT_ADDR_ADD_COUNT)->EnableWindow(FALSE);
 		GetDlgItem(IDC_EDIT_DEV_NAME)->EnableWindow(FALSE);
+		GetDlgItem(IDC_EDIT_FREQ_TRIM)->EnableWindow(FALSE);
+		GetDlgItem(IDC_EDIT_LOAD_CAP)->EnableWindow(FALSE);
 	}
 
-	((CButton *)GetDlgItem(IDC_CHECK_GET_ADDR_AND_NAME))->SetCheck(g_user_config.check_get_addr_and_name);
+	((CButton *)GetDlgItem(IDC_CHECK_GET_ADDR_AND_NAME))->SetCheck(g_user_config.check_get_bt_config);
 
 	((CButton *)GetDlgItem(IDC_CHECK_ADDR_AUTO_ADD))->SetCheck(g_user_config.check_addr_auto_add);
 	if(!g_user_config.check_addr_auto_add){
@@ -783,20 +948,53 @@ void CQCC30xx_toolDlg::setConfigToDialog()
 	((CComboBox *)GetDlgItem(IDC_COMBO_CHIP_TYPE))->SetCurSel(g_user_config.chip_type);
 
 	((CComboBox *)GetDlgItem(IDC_COMBO_PORT_TYPE))->SetCurSel(g_user_config.trans_type);
-
+#ifdef UNICODE
+	str.Format(_T("%s"), g_user_config.file_path);
+#else
 	str.Format("%s", g_user_config.file_path);
+#endif
 	GetDlgItem(IDC_EDIT_FILE_PATH)->SetWindowText(str);
 
+#ifdef UNICODE
+	str.Format(_T("%d"), g_user_config.trans_port);
+#else
 	str.Format("%d", g_user_config.trans_port);
+#endif
 	GetDlgItem(IDC_EDIT_PROT)->SetWindowText(str);
 
+#ifdef UNICODE
+	str.Format(_T("%s"), g_user_config.btaddr);
+#else
 	str.Format("%s", g_user_config.btaddr);
+#endif
 	GetDlgItem(IDC_EDIT_ADDR)->SetWindowText(str);
 
+#ifdef UNICODE
+	str.Format(_T("%d"), g_user_config.addr_auto_add_count);
+#else
 	str.Format("%d", g_user_config.addr_auto_add_count);
+#endif
 	GetDlgItem(IDC_EDIT_ADDR_ADD_COUNT)->SetWindowText(str);
 
-	str.Format("%s",g_user_config.btname);
+#ifdef UNICODE
+	str.Format(_T("%d"), g_user_config.trim_freq);
+#else
+	str.Format("%d", g_user_config.trim_cap);
+#endif
+	GetDlgItem(IDC_EDIT_LOAD_CAP)->SetWindowText(str);
+
+#ifdef UNICODE
+	str.Format(_T("%d"), g_user_config.trim_freq);
+#else
+	str.Format("%d", g_user_config.trim_freq);
+#endif
+	GetDlgItem(IDC_EDIT_FREQ_TRIM)->SetWindowText(str);
+
+#ifdef UNICODE
+	str.Format(_T("%s"), g_user_config.btname);
+#else
+	str.Format("%s", g_user_config.btname);
+#endif
 	GetDlgItem(IDC_EDIT_DEV_NAME)->SetWindowText(str);
 }
 
@@ -816,10 +1014,12 @@ void CQCC30xx_toolDlg::enableAllControl(int enable)
 		GetDlgItem(IDC_COMBO_PORT_TYPE)->EnableWindow(TRUE);
 		GetDlgItem(IDC_EDIT_FILE_PATH)->EnableWindow(TRUE);
 		GetDlgItem(IDC_EDIT_PROT)->EnableWindow(TRUE);
-		if(g_user_config.check_set_addr_and_name){
+		if(g_user_config.check_set_bt_config){
 			GetDlgItem(IDC_EDIT_ADDR)->EnableWindow(TRUE);
 			GetDlgItem(IDC_EDIT_ADDR_ADD_COUNT)->EnableWindow(TRUE);
 			GetDlgItem(IDC_EDIT_DEV_NAME)->EnableWindow(TRUE);
+			GetDlgItem(IDC_EDIT_FREQ_TRIM)->EnableWindow(TRUE);
+			GetDlgItem(IDC_EDIT_LOAD_CAP)->EnableWindow(TRUE);
 		}
 		if(g_user_config.check_addr_auto_add){
 			GetDlgItem(IDC_EDIT_ADDR_ADD_COUNT)->EnableWindow(TRUE);
@@ -841,33 +1041,40 @@ void CQCC30xx_toolDlg::enableAllControl(int enable)
 		GetDlgItem(IDC_EDIT_ADDR)->EnableWindow(FALSE);
 		GetDlgItem(IDC_EDIT_ADDR_ADD_COUNT)->EnableWindow(FALSE);
 		GetDlgItem(IDC_EDIT_DEV_NAME)->EnableWindow(FALSE);
+		GetDlgItem(IDC_EDIT_FREQ_TRIM)->EnableWindow(FALSE);
+		GetDlgItem(IDC_EDIT_LOAD_CAP)->EnableWindow(FALSE);
 	}
 }
 
-DWORD WINAPI download_config_proc(void *pParam)
+DWORD WINAPI device_operate_proc(void *pParam)
 {
 	CQCC30xx_toolDlg *mDlg = (CQCC30xx_toolDlg *)pParam;
 
 	int result = 0;
 	mDlg->enableAllControl(FALSE);
 	mDlg->loadConfigFromDialog();
+
+	//earse and burn
 	(mDlg->GetDlgItem(IDC_STATIC_RESULT))->SetWindowText(_T("IDLE"));
 	if(g_user_config.check_earse || g_user_config.check_burn) {
-		result = mDlg->program_dev_single();
+		result = mDlg->dev_program_single();
 		if(-1 == result)
 			(mDlg->GetDlgItem(IDC_STATIC_RESULT))->SetWindowText(_T("DOWNLOAD FAIL"));
+		else
+			(mDlg->GetDlgItem(IDC_STATIC_RESULT))->SetWindowText(_T("DOWNLOAD OK"));
 	}
 	
-	if(-1 != result && (g_user_config.check_set_addr_and_name || g_user_config.check_get_addr_and_name)) {
-		Sleep(1000);
-		result = mDlg->config_operation();
+	//set/get config
+	if(-1 != result && (g_user_config.check_set_bt_config || g_user_config.check_get_bt_config)) {
+		Sleep(1500);
+		result = mDlg->dev_config_operate();
 		if(-1 == result)
 			(mDlg->GetDlgItem(IDC_STATIC_RESULT))->SetWindowText(_T("CONFIG FAIL"));
 	}
 
 	if(-1 != result) {
 		(mDlg->GetDlgItem(IDC_STATIC_RESULT))->SetWindowText(_T("SUCCESS"));
-		if(g_user_config.check_set_addr_and_name && g_user_config.check_addr_auto_add) {
+		if(g_user_config.check_set_bt_config && g_user_config.check_addr_auto_add) {
 			uint8 m_addr[6];
 			CString str;
 			if(g_user_config.addr_auto_add_count > 2)
@@ -878,11 +1085,16 @@ DWORD WINAPI download_config_proc(void *pParam)
 				tmp = (tmp + g_user_config.addr_auto_add_count) & 0xffffff;
 				sprintf(g_user_config.btaddr,"%02x%02x-%02x-%06x",m_addr[0],m_addr[1],m_addr[2],tmp);
 			}
-			str.Format("%s",g_user_config.btaddr);
+#ifdef UNICODE
+			str.Format(_T("%s"), g_user_config.btaddr);
+#else
+			str.Format("%s", g_user_config.btaddr);
+#endif
 			(mDlg->GetDlgItem(IDC_EDIT_ADDR))->SetWindowText(str);
 			//str.Format("%d",g_user_config.check_addr_auto_add);
 			//GetDlgItem(IDC_EDIT_ADDR_ADD_COUNT)->SetWindowText(str);
 		}
+		mDlg->loadConfigFromDialog();
 	}
 	mDlg->enableAllControl(TRUE);
 	return 0;
@@ -899,42 +1111,12 @@ void CQCC30xx_toolDlg::OnBnClickedButtonStart()
 	//调用线程设置对话框显示内容
 	hThread = CreateThread(NULL	// 默认安全属性
 		, NULL		// 默认堆栈大小
-		, download_config_proc // 线程入口地址
+		, device_operate_proc // 线程入口地址
 		, this	//传递给线程函数的参数
 		, 0		// 指定线程立即运行
 		, &dwThreadId	//线程ID号
 		);
 	CloseHandle(hThread);	//关闭线程句柄，内核引用计数减一
-	//int result = 0;
-	//enableAllControl(FALSE);
-	//loadConfigFromDialog();
-	//GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(_T("IDLE"));
-	//if(g_user_config.check_earse || g_user_config.check_burn)
-	//	result = program_dev_single();
-	//if(-1 != result && (g_user_config.check_set_addr_and_name || g_user_config.check_get_addr_and_name))
-	//	result = config_operation();
-	//enableAllControl(TRUE);
-	//if(-1 == result) {
-	//	GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(_T("FAIL"));
-	//} else {
-	//	GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(_T("SUCCESS"));
-	//	if(g_user_config.check_set_addr_and_name && g_user_config.check_addr_auto_add) {
-	//		uint8 m_addr[6];
-	//		CString str;
-	//		if(g_user_config.addr_auto_add_count > 2)
-	//			g_user_config.addr_auto_add_count = 0;
-
-	//		if(-1 != str2hexArray(g_user_config.btaddr,m_addr)){
-	//			uint32 tmp = m_addr[3]<<16 | m_addr[4]<<8 | m_addr[5];
-	//			tmp = (tmp + g_user_config.addr_auto_add_count) & 0xffffff;
-	//			sprintf(g_user_config.btaddr,"%02x%02x-%02x-%06x",m_addr[0],m_addr[1],m_addr[2],tmp);
-	//		}
-	//		str.Format("%s",g_user_config.btaddr);
-	//		GetDlgItem(IDC_EDIT_ADDR)->SetWindowText(str);
-	//		//str.Format("%d",g_user_config.check_addr_auto_add);
-	//		//GetDlgItem(IDC_EDIT_ADDR_ADD_COUNT)->SetWindowText(str);
-	//	}
-	//}
 }
 
 void CQCC30xx_toolDlg::OnBnClickedButtonOpenFile()
@@ -965,7 +1147,11 @@ DWORD WINAPI draw_port_page(void *pParam)
 	((CComboBox *)(mDlg->GetDlgItem(IDC_DIALOG_PORT_COMBO_TYPE)))->SetCurSel(0);
 	for(int i = 0;i<count;i++){
 		CString str;
-		str.Format("%s",g_trans_port_arr[i]);
+#ifdef UNICODE
+		str.Format(_T("%s"), g_trans_port_arr[i]);
+#else
+		str.Format("%s", g_trans_port_arr[i]);
+#endif
 		((CComboBox *)(mDlg->GetDlgItem(IDC_DIALOG_PORT_COMBO_PORT)))->InsertString(i, str);
 	}
 	((CComboBox *)(mDlg->GetDlgItem(IDC_DIALOG_PORT_COMBO_PORT)))->SetCurSel(0);
@@ -1014,7 +1200,11 @@ void CQCC30xx_toolDlg::OnBnClickedButtonGetPort()
 			g_user_config.trans_port = atoi(pNext);
 		}
 		((CComboBox *)GetDlgItem(IDC_COMBO_PORT_TYPE))->SetCurSel(g_user_config.trans_type);
+#ifdef UNICODE
+		str.Format(_T("%d"), g_user_config.trans_port);
+#else
 		str.Format("%d", g_user_config.trans_port);
+#endif
 		GetDlgItem(IDC_EDIT_PROT)->SetWindowText(str);
 	}
 }
@@ -1036,14 +1226,18 @@ void CQCC30xx_toolDlg::OnBnClickedCheckBurn()
 void CQCC30xx_toolDlg::OnBnClickedCheckSetAddrAndName()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	g_user_config.check_set_addr_and_name =((CButton *)GetDlgItem(IDC_CHECK_SET_ADDR_AND_NAME))->GetCheck();
+	g_user_config.check_set_bt_config =((CButton *)GetDlgItem(IDC_CHECK_SET_ADDR_AND_NAME))->GetCheck();
 	
-	if(g_user_config.check_set_addr_and_name){
+	if(g_user_config.check_set_bt_config){
 		GetDlgItem(IDC_EDIT_ADDR)->EnableWindow(TRUE);
 		GetDlgItem(IDC_EDIT_DEV_NAME)->EnableWindow(TRUE);
+		GetDlgItem(IDC_EDIT_FREQ_TRIM)->EnableWindow(TRUE);
+		GetDlgItem(IDC_EDIT_LOAD_CAP)->EnableWindow(TRUE);
 	} else {
 		GetDlgItem(IDC_EDIT_ADDR)->EnableWindow(FALSE);
 		GetDlgItem(IDC_EDIT_DEV_NAME)->EnableWindow(FALSE);
+		GetDlgItem(IDC_EDIT_FREQ_TRIM)->EnableWindow(FALSE);
+		GetDlgItem(IDC_EDIT_LOAD_CAP)->EnableWindow(FALSE);
 	}
 }
 
@@ -1064,7 +1258,7 @@ void CQCC30xx_toolDlg::OnBnClickedCheckAddrAutoAdd()
 void CQCC30xx_toolDlg::OnBnClickedCheckGetAddrAndName()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	g_user_config.check_get_addr_and_name =((CButton *)GetDlgItem(IDC_CHECK_GET_ADDR_AND_NAME))->GetCheck();
+	g_user_config.check_get_bt_config =((CButton *)GetDlgItem(IDC_CHECK_GET_ADDR_AND_NAME))->GetCheck();
 }
 
 

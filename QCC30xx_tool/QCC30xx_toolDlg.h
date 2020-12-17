@@ -32,8 +32,9 @@ public:
 	void loadConfigFromDialog();
 	void setConfigToDialog();
 	void enableAllControl(int enable);
-	int program_dev_single();
-	int config_operation();
+	int dev_program_single();
+	int dev_program_multiple();
+	int dev_config_operate();
 	CFont m_editFont;
 	CFont m_editFont1;
 
